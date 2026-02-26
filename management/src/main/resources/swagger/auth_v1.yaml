@@ -1,0 +1,172 @@
+# openapi: 3.0.1
+# info:
+#   title: Authentication Service API
+#   description: API для аутентификации и управления токенами
+#   version: 1.0.0
+# servers:
+#   - url: http://localhost:8081/auth
+#     description: Auth Service
+# tags:
+#   - name: Authentication
+#     description: Операции аутентификации
+# paths:
+#   /login:
+#     post:
+#       tags:
+#         - Authentication
+#       summary: Вход в систему
+#       operationId: login
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/LoginRequest'
+#       responses:
+#         '200':
+#           description: Успешная аутентификация
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/LoginResponse'
+#         '401':
+#           description: Неверные учетные данные
+#   /refresh:
+#     post:
+#       tags:
+#         - Authentication
+#       summary: Обновление токена
+#       operationId: refreshToken
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/RefreshTokenRequest'
+#       responses:
+#         '200':
+#           description: Токен обновлен
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/LoginResponse'
+#   /validate:
+#     post:
+#       tags:
+#         - Authentication
+#       summary: Проверка токена
+#       operationId: validateToken
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/ValidateTokenRequest'
+#       responses:
+#         '200':
+#           description: Результат проверки
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: '#/components/schemas/TokenValidationResponse'
+#   /logout:
+#     post:
+#       tags:
+#         - Authentication
+#       summary: Выход из системы
+#       operationId: logout
+#       requestBody:
+#         required: true
+#         content:
+#           application/json:
+#             schema:
+#               $ref: '#/components/schemas/LogoutRequest'
+#       responses:
+#         '200':
+#           description: Успешный выход
+# components:
+#   schemas:
+
+#     LoginRequest:
+#       type: object
+#       required: [username, password]
+#       properties:
+#         username:
+#           type: string
+#           example: john.doe
+#         password:
+#           type: string
+#           format: password
+
+#     LoginResponse:
+#       type: object
+#       properties:
+#         accessToken:
+#           type: string
+#         refreshToken:
+#           type: string
+#         expiresIn:
+#           type: integer
+#         tokenType:
+#           type: string
+#           default: Bearer
+#         userId:
+#           type: integer
+#           format: int64
+#         username:
+#           type: string
+#         roles:
+#           type: array
+#           items:
+#             type: string
+
+#     RefreshTokenRequest:
+#       type: object
+#       required: [refreshToken]
+#       properties:
+#         refreshToken:
+#           type: string
+
+#     ValidateTokenRequest:
+#       type: object
+#       required: [token]
+#       properties:
+#         token:
+#           type: string
+
+#     TokenValidationResponse:
+#       type: object
+#       properties:
+#         valid:
+#           type: boolean
+#         userId:
+#           type: integer
+#           format: int64
+#         username:
+#           type: string
+#         roles:
+#           type: array
+#           items:
+#             type: string
+
+#     LogoutRequest:
+#       type: object
+#       required: [accessToken]
+#       properties:
+#         accessToken:
+#           type: string
+
+#     ErrorResponse:
+#       type: object
+#       properties:
+#         timestamp:
+#           type: string
+#           format: date-time
+#         status:
+#           type: integer
+#         error:
+#           type: string
+#         message:
+#           type: string
+#         path:
+#           type: string

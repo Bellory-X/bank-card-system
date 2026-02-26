@@ -1,0 +1,886 @@
+openapi: 3.0.1
+info:
+  title: Card Management API
+  description: API for managing bank cards with user and admin endpoints
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local server
+
+tags:
+  - name: user-card
+    description: Endpoints for card owners (users)
+  - name: admin-card
+    description: Endpoints for administrators
+
+paths:
+  # ==================== USER ENDPOINTS ====================
+  /user/cards:
+    get:
+      tags:
+        - user-card
+      summary: Get user's own cards
+      description: Returns paginated list of authenticated user's cards
+      operationId: getUserCards
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          schema:
+            $ref: '#/components/schemas/CardSortField'
+        - name: sortDirection
+          in: query
+          description: Sort direction
+          schema:
+            $ref: '#/components/schemas/SortDirection'
+        - name: status
+          in: query
+          description: Filter by card status
+          schema:
+            $ref: '#/components/schemas/CardStatus'
+        - name: cardholderNameFilter
+          in: query
+          description: Filter by cardholder name (partial match)
+          schema:
+            type: string
+            minLength: 2
+      responses:
+        '200':
+          description: Successfully retrieved cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCardPageable'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /user/cards/{cardId}:
+    get:
+      tags:
+        - user-card
+      summary: Get card details
+      description: Returns detailed information about specific card
+      operationId: getUserCardById
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCardResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (card belongs to another user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /user/cards/{cardId}/block:
+    post:
+      tags:
+        - user-card
+      summary: Request card blocking
+      description: User requests to block their card (admin must approve)
+      operationId: requestCardBlock
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Block request submitted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /user/transfer:
+    post:
+      tags:
+        - user-card
+      summary: Transfer between own cards
+      description: Transfer money from one user card to another user card
+      operationId: transferBetweenOwnCards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+        '400':
+          description: Invalid request (insufficient funds, same card, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (cards belong to different users)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  # ==================== ADMIN ENDPOINTS ====================
+  /admin/cards:
+    get:
+      tags:
+        - admin-card
+      summary: Get all cards
+      description: Returns paginated list of all cards (admin only)
+      operationId: getAllCards
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          schema:
+            $ref: '#/components/schemas/CardSortField'
+        - name: sortDirection
+          in: query
+          description: Sort direction
+          schema:
+            $ref: '#/components/schemas/SortDirection'
+        - name: status
+          in: query
+          description: Filter by card status
+          schema:
+            $ref: '#/components/schemas/CardStatus'
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+            format: uuid
+        - name: cardholderNameFilter
+          in: query
+          description: Filter by cardholder name (partial match)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCardPageable'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - admin-card
+      summary: Create new card
+      description: Creates a new card for a user (admin only)
+      operationId: createCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCardRequest'
+      responses:
+        '201':
+          description: Card created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCardResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /admin/cards/{cardId}:
+    get:
+      tags:
+        - admin-card
+      summary: Get card by ID
+      description: Returns detailed card information (admin only)
+      operationId: getCardById
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCardResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+    delete:
+      tags:
+        - admin-card
+      summary: Delete card
+      description: Permanently deletes a card (admin only)
+      operationId: deleteCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Card deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /admin/cards/{cardId}/status:
+    patch:
+      tags:
+        - admin-card
+      summary: Update card status
+      description: Block, activate or expire a card (admin only)
+      operationId: updateCardStatus
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCardStatusRequest'
+      responses:
+        '204':
+          description: Status updated successfully
+        '400':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /admin/cards/user/{userId}:
+    get:
+      tags:
+        - admin-card
+      summary: Get user's cards
+      description: Returns all cards of specific user (admin only)
+      operationId: getUserCardsByAdmin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          schema:
+            $ref: '#/components/schemas/CardSortField'
+        - name: sortDirection
+          in: query
+          description: Sort direction
+          schema:
+            $ref: '#/components/schemas/SortDirection'
+      responses:
+        '200':
+          description: Successfully retrieved cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCardPageable'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    # ==================== ENUMS ====================
+    CardStatus:
+      type: string
+      description: Current status of the card
+      enum:
+        - ACTIVE
+        - BLOCKED
+        - EXPIRED
+      example: ACTIVE
+
+    CardSortField:
+      type: string
+      description: Fields available for sorting cards
+      enum:
+        - CARD_NUMBER
+        - CARDHOLDER_NAME
+        - EXPIRY_DATE
+        - STATUS
+        - BALANCE
+        - CREATED_AT
+      example: CREATED_AT
+
+    SortDirection:
+      type: string
+      description: Sort direction
+      enum:
+        - ASC
+        - DESC
+      default: DESC
+      example: DESC
+
+    # ==================== REQUEST DTOs ====================
+    CreateCardRequest:
+      type: object
+      description: Request body for creating a new card
+      required:
+        - cardholderName
+        - expiryDate
+        - userId
+      properties:
+        cardholderName:
+          type: string
+          description: Name of the cardholder as printed on card
+          minLength: 2
+          maxLength: 100
+          example: "IVAN PETROV"
+        expiryDate:
+          type: string
+          format: date
+          description: Card expiry date
+          example: "2025-12-31"
+        userId:
+          type: string
+          format: uuid
+          description: ID of the user who will own the card
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
+    UpdateCardStatusRequest:
+        type: object
+        properties:
+          status:
+            $ref: '#/components/schemas/CardStatus'
+        required:
+          - status
+          
+    TransferRequest:
+      type: object
+      description: Request body for money transfer between user's own cards
+      required:
+        - fromCardId
+        - toCardId
+        - amount
+      properties:
+        fromCardId:
+          type: string
+          format: uuid
+          description: Source card ID
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        toCardId:
+          type: string
+          format: uuid
+          description: Destination card ID
+          example: "123e4567-e89b-12d3-a456-426614174002"
+        amount:
+          type: number
+          format: double
+          description: Amount to transfer
+          minimum: 0.01
+          example: 150.50
+        description:
+          type: string
+          description: Transfer description
+          maxLength: 255
+          example: "Monthly savings"
+
+    # ==================== RESPONSE DTOs (USER) ====================
+    UserCardResponse:
+      type: object
+      description: Card information visible to the card owner
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Card ID
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        maskedNumber:
+          type: string
+          description: Masked card number (only last 4 digits visible)
+          pattern: '^\*\*\*\* \*\*\*\* \*\*\*\* \d{4}$'
+          example: "**** **** **** 1234"
+        cardholderName:
+          type: string
+          description: Name of the cardholder
+          example: "IVAN PETROV"
+        expiryDate:
+          type: string
+          format: date
+          description: Card expiry date
+          example: "2025-12-31"
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        balance:
+          type: number
+          format: double
+          description: Current card balance
+          example: 1250.50
+        currency:
+          type: string
+          description: Card currency
+          example: "USD"
+          default: "USD"
+
+    UserCardPageable:
+      type: object
+      description: Paginated response with user's cards
+      properties:
+        content:
+          type: array
+          description: List of cards on current page
+          items:
+            $ref: '#/components/schemas/UserCardResponse'
+        page:
+          type: integer
+          description: Current page number (zero-based)
+          example: 0
+        size:
+          type: integer
+          description: Number of items per page
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of cards
+          example: 45
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 3
+        first:
+          type: boolean
+          description: Whether this is the first page
+          example: true
+        last:
+          type: boolean
+          description: Whether this is the last page
+          example: false
+
+    # ==================== RESPONSE DTOs (ADMIN) ====================
+    AdminCardResponse:
+      type: object
+      description: Card information visible to administrators (no balance)
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Card ID
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        maskedNumber:
+          type: string
+          description: Masked card number (even admin sees masked number)
+          pattern: '^\*\*\*\* \*\*\*\* \*\*\*\* \d{4}$'
+          example: "**** **** **** 1234"
+        encryptedNumber:
+          type: string
+          description: Fully encrypted card number (for internal use only)
+          example: "a1b2c3d4e5f6g7h8i9j0"
+        cardholderName:
+          type: string
+          description: Name of the cardholder
+          example: "IVAN PETROV"
+        expiryDate:
+          type: string
+          format: date
+          description: Card expiry date
+          example: "2025-12-31"
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        userId:
+          type: string
+          format: uuid
+          description: ID of the card owner
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        createdAt:
+          type: string
+          format: date-time
+          description: Card creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-20T14:25:00Z"
+        lastTransactionId:
+          type: string
+          description: ID of the last transaction
+          example: "txn_987654"
+        currency:
+          type: string
+          description: Card currency
+          example: "USD"
+          default: "USD"
+
+    AdminCardPageable:
+      type: object
+      description: Paginated response with all cards (admin view)
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCardResponse'
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 150
+        totalPages:
+          type: integer
+          example: 8
+        first:
+          type: boolean
+          example: true
+        last:
+          type: boolean
+          example: false
+
+    TransferResponse:
+      type: object
+      description: Response after successful transfer
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+          example: "987f6543-e21d-34c5-b678-526614175111"
+        fromCardId:
+          type: string
+          format: uuid
+          description: Source card ID
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        toCardId:
+          type: string
+          format: uuid
+          description: Destination card ID
+          example: "123e4567-e89b-12d3-a456-426614174002"
+        amount:
+          type: number
+          format: double
+          description: Transferred amount
+          example: 150.50
+        newBalance:
+          type: number
+          format: double
+          description: New balance of source card
+          example: 1100.00
+        timestamp:
+          type: string
+          format: date-time
+          description: Transfer timestamp
+          example: "2024-01-25T15:30:00Z"
+        description:
+          type: string
+          description: Transfer description
+          example: "Monthly savings"
+
+    BlockRequestResponse:
+      type: object
+      description: Response after submitting a block request
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: ID of the block request for tracking
+          example: "123e4567-e89b-12d3-a456-426614174999"
+        cardId:
+          type: string
+          format: uuid
+          description: ID of the card requested for blocking
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        requestedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the request
+          example: "2024-01-25T16:45:00Z"
+        status:
+          type: string
+          enum: [PENDING]
+          description: Status of the block request
+          example: "PENDING"
+
+    # ==================== ERROR RESPONSE ====================
+    ErrorResponse:
+      type: object
+      description: Standard error response
+      properties:
+        code:
+          type: string
+          description: Error code (e.g., CARD_NOT_FOUND, INSUFFICIENT_FUNDS)
+          example: "CARD_NOT_FOUND"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Card with ID 123e4567-e89b-12d3-a456-426614174999 not found"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2024-01-25T15:30:00Z"
+        path:
+          type: string
+          description: Request path that caused the error
+          example: "/api/user/cards/123e4567-e89b-12d3-a456-426614174999"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+          example:
+            cardId: "123e4567-e89b-12d3-a456-426614174999"
+            userId: "123e4567-e89b-12d3-a456-426614174000"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter JWT token
+
+security:
+  - bearerAuth: []
