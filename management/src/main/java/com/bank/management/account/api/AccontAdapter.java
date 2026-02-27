@@ -3,13 +3,12 @@ package com.bank.management.account.api;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import org.springframework.stereotype.Service;
-
+import org.springframework.stereotype.Component;
 import com.bank.management.account.impl.AccountCommands;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class AccontAdapter {
 

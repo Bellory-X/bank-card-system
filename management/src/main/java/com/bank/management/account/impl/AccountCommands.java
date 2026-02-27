@@ -71,11 +71,11 @@ public class AccountCommands {
             if (!fromAccount.isEnabled()) {
                 transferAccount.setDescription("Невозможно выполнить операцию, счет отправителя заблокирован.");
 
-            } else if (transferAccount.getPrice().compareTo(fromAccount.getBalance()) > 0) {
+            } else if (transferAccount.getAmount().compareTo(fromAccount.getBalance()) > 0) {
                 transferAccount.setDescription("Недостаточно средств для совершения перевода.");
             } else {
-                fromAccount.setBalance(fromAccount.getBalance().subtract(transferAccount.getPrice()));
-                toAccount.setBalance(toAccount.getBalance().add(transferAccount.getPrice()));
+                fromAccount.setBalance(fromAccount.getBalance().subtract(transferAccount.getAmount()));
+                toAccount.setBalance(toAccount.getBalance().add(transferAccount.getAmount()));
                 accountRepository.save(fromAccount);
                 accountRepository.save(toAccount);
                 transferAccount.setDescription("Операция выполнена успешно.");

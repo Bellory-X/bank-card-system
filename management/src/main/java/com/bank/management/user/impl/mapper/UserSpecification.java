@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserSpecification {
-
+// TODO Дописать
     private UserSpecification() {}
 
     public static Pageable getPageable(UserFilter filter) {

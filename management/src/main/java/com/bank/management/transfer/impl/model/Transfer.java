@@ -35,8 +35,8 @@ public class Transfer {
     @Column(name = "from_account_guid", nullable = false)
     private UUID fromAccountGuid;
 
-    @Column(name = "price", nullable = false)
-    private BigDecimal price;
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = ZonedDateTime.now().toLocalDateTime();

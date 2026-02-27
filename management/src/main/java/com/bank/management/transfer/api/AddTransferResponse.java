@@ -8,7 +8,7 @@ public record AddTransferResponse(
     UUID guid,
     UUID toAccountGuid,
     UUID fromAccountGuid,
-    BigDecimal price,
+    BigDecimal amount,
     ZonedDateTime createdAt,
     Boolean completed,
     String description

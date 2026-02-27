@@ -29,7 +29,7 @@ import java.util.UUID;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-public class UserApiController {
+public class UserApiController { // TODO Дописать
 
     private final UserCommands userService;
 
@@ -45,9 +45,14 @@ public class UserApiController {
         return userService.get(userGuid);
     }
 
-    public UserPageable getUsers(@Min(0) @Valid Integer page, @Min(1) @Max(100) @Valid Integer size,
-            @Valid UserSortField sortBy, @Valid SortDirection sortDirection, @Valid UserRole role,
-            @Valid Boolean enabled, @Size(min = 2) @Valid String searchQuery) {
+    public UserPageable getUsers(
+        @Min(0) @Valid Integer page, 
+        @Min(1) @Max(100) @Valid Integer size,
+        @Valid UserSortField sortBy, 
+        @Valid SortDirection sortDirection, 
+        @Valid UserRole role,
+        @Valid Boolean enabled, 
+        @Size(min = 2) @Valid String searchQuery) {
         // TODO Auto-generated method stub
         return userService.get(
             new UserFilter(

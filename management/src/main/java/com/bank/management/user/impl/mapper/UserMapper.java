@@ -14,7 +14,7 @@ import com.bank.manager.user.api.model.UserPageable;
 import com.bank.manager.user.api.model.UserResponse;
 
 @Mapper(componentModel = "spring")
-public interface UserMapper {
+public interface UserMapper {// TODO Дописать
 
     @Mapping(source = "guid", target = "id")
     @Mapping(source = "login", target = "login")

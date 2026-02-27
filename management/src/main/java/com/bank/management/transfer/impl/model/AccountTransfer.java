@@ -29,8 +29,8 @@ public class AccountTransfer {
     @Column(name = "to_card_guid", nullable = false)
     private UUID toAccountGuid;
 
-    @Column(name = "price", nullable = false)
-    private BigDecimal price;
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
 
     @Column(name = "send", nullable = false)
     private boolean send = false;

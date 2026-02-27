@@ -6,6 +6,6 @@ import java.util.UUID;
 public record AddTransferRequest(
     UUID toAccountGuid, 
     UUID fromAccountGuid, 
-    BigDecimal price
+    BigDecimal amount
 ) {
 }

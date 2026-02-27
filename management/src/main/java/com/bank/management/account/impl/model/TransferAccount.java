@@ -30,8 +30,8 @@ public class TransferAccount {
     @Column(name = "from_account_guid", nullable = false)
     private UUID fromAccountGuid;
 
-    @Column(name = "price", nullable = false)
-    private BigDecimal price;
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
 
     @Column(name = "completed", nullable = false)
     private boolean completed = false;
